@@ -179,8 +179,11 @@ function animate(timestamp = 0) {
             ctx.shadowColor = `hsla(${frameHue}, 100%, 70%, ${opacity * 0.6})`;
             ctx.shadowBlur = blurIntensity;
 
+            const frontThickness = 5.5;
+            const backThickness = 3.5;
+
             ctx.strokeStyle = `hsla(${frameHue}, 100%, ${lightness}%, ${opacity})`;
-            ctx.lineWidth = (avgZ > 0 ? 3 : 1.5) * (0.8 + fade * 0.6);
+            ctx.lineWidth = (avgZ > 0 ? frontThickness : backThickness) * (1 + fade * 0.7);
             ctx.lineCap = 'round';
 
             ctx.beginPath();
