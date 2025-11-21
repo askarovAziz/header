@@ -93,9 +93,10 @@ class Cube {
 
 const cube = new Cube(100);
 
+let viewerDistance = 400;
+
 function project(point) {
     const fov = 600;
-    const viewerDistance = 400;
 
     const factor = fov / (viewerDistance + point.z);
     const x = point.x * factor + canvas.width / 2;
@@ -115,6 +116,18 @@ const trailLength = 8;
 
 const autoRotationSpeedX = 0.003;
 const autoRotationSpeedY = 0.002;
+
+const minZoom = 150;
+const maxZoom = 900;
+const zoomStep = 40;
+
+canvas.addEventListener('wheel', (event) => {
+    event.preventDefault();
+    viewerDistance = Math.min(
+        maxZoom,
+        Math.max(minZoom, viewerDistance + Math.sign(event.deltaY) * zoomStep)
+    );
+}, { passive: false });
 
 function animate(timestamp = 0) {
     const delta = lastFrameTime ? (timestamp - lastFrameTime) / 16.67 : 1;
