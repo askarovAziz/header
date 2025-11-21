@@ -33,9 +33,8 @@ function resizeCanvas() {
     canvas.width = rect.width;
     canvas.height = rect.height;
 
-    // Set a base fill so trails accumulate on a consistent background
-    ctx.fillStyle = 'rgba(10, 14, 39, 1)';
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    // Clear any previous drawing so the hero gradient shows through
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
 }
 resizeCanvas();
 window.addEventListener('resize', resizeCanvas);
@@ -118,8 +117,8 @@ function animate(timestamp = 0) {
     const delta = lastFrameTime ? (timestamp - lastFrameTime) / 16.67 : 1;
     lastFrameTime = timestamp;
 
-    // Fade previous frame slightly to create motion trail
-    ctx.fillStyle = 'rgba(10, 14, 39, 0.1)';
+    // Fade previous frame slightly to create motion trail without a harsh black background
+    ctx.fillStyle = 'rgba(10, 14, 39, 0.08)';
     ctx.fillRect(0, 0, canvas.width, canvas.height);
 
     const mouseInfluence = 0.002;
