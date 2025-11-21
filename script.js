@@ -110,15 +110,15 @@ let mouseAngleX = 0;
 let mouseAngleY = 0;
 let lastFrameTime = 0;
 
+const trailHistory = [];
+const trailLength = 8;
+
 const autoRotationSpeedX = 0.003;
 const autoRotationSpeedY = 0.002;
 
 function animate(timestamp = 0) {
     const delta = lastFrameTime ? (timestamp - lastFrameTime) / 16.67 : 1;
     lastFrameTime = timestamp;
-
-    // Clear previous frame so the cube renders without a background overlay
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
 
     const mouseInfluence = 0.002;
     const targetAngleX = (mouseY - canvas.height / 2) * mouseInfluence;
@@ -133,46 +133,66 @@ function animate(timestamp = 0) {
     const angleX = baseAngleX + mouseAngleX;
     const angleY = baseAngleY + mouseAngleY;
 
+    // Clear previous frame so the cube renders without a background overlay
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+
     const projectedVertices = cube.vertices.map(v => v.rotate(angleX, angleY)).map(project);
+    const hue = Math.atan2(angleY, angleX) * 180 / Math.PI;
 
-    cube.edges.forEach(edge => {
-        const p1 = projectedVertices[edge[0]];
-        const p2 = projectedVertices[edge[1]];
-
-        // Glow effect
-        ctx.shadowColor = 'rgba(0, 255, 136, 0.5)';
-        ctx.shadowBlur = 10;
-
-        // Gradient color based on depth
-        const avgZ = (p1.z + p2.z) / 2;
-        const hue = Math.atan2(angleY, angleX) * 180 / Math.PI;
-
-        ctx.strokeStyle = avgZ > 0
-            ? `hsl(${hue}, 100%, 50%)`
-            : `hsl(${hue}, 100%, 40%)`;
-
-        ctx.lineWidth = avgZ > 0 ? 3 : 1.5;
-        ctx.lineCap = 'round';
-
-        ctx.beginPath();
-        ctx.moveTo(p1.x, p1.y);
-        ctx.lineTo(p2.x, p2.y);
-        ctx.stroke();
+    // Keep a short history of frames to draw motion trails
+    trailHistory.unshift({
+        vertices: projectedVertices.map(v => ({ ...v })),
+        hue
     });
 
-    // Draw vertices as glowing points
-    projectedVertices.forEach(p => {
-        ctx.fillStyle = p.z > 0
-            ? 'rgba(0, 255, 136, 0.8)'
-            : 'rgba(0, 255, 200, 0.4)';
+    if (trailHistory.length > trailLength) {
+        trailHistory.pop();
+    }
 
-        ctx.shadowColor = 'rgba(0, 255, 136, 0.8)';
-        ctx.shadowBlur = 15;
+    // Draw from the oldest frame to the newest for layered blur
+    for (let i = trailHistory.length - 1; i >= 0; i--) {
+        const { vertices, hue: frameHue } = trailHistory[i];
+        const fade = 1 - i / trailLength;
+        const opacity = 0.1 + fade * 0.25;
+        const blurIntensity = 10 * fade;
 
-        ctx.beginPath();
-        ctx.arc(p.x, p.y, p.z > 0 ? 6 : 3, 0, Math.PI * 2);
-        ctx.fill();
-    });
+        cube.edges.forEach(edge => {
+            const p1 = vertices[edge[0]];
+            const p2 = vertices[edge[1]];
+
+            const avgZ = (p1.z + p2.z) / 2;
+            const lightness = avgZ > 0 ? 50 : 40;
+
+            ctx.shadowColor = `hsla(${frameHue}, 100%, 70%, ${opacity * 0.6})`;
+            ctx.shadowBlur = blurIntensity;
+
+            ctx.strokeStyle = `hsla(${frameHue}, 100%, ${lightness}%, ${opacity})`;
+            ctx.lineWidth = (avgZ > 0 ? 3 : 1.5) * (0.8 + fade * 0.6);
+            ctx.lineCap = 'round';
+
+            ctx.beginPath();
+            ctx.moveTo(p1.x, p1.y);
+            ctx.lineTo(p2.x, p2.y);
+            ctx.stroke();
+        });
+
+        // Draw vertices with diminishing intensity for the trail
+        vertices.forEach(p => {
+            const pointOpacity = opacity * 0.7;
+            const radius = (p.z > 0 ? 6 : 3) * (0.5 + fade * 0.6);
+
+            ctx.fillStyle = p.z > 0
+                ? `rgba(0, 255, 136, ${pointOpacity})`
+                : `rgba(0, 255, 200, ${pointOpacity * 0.7})`;
+
+            ctx.shadowColor = `rgba(0, 255, 136, ${pointOpacity})`;
+            ctx.shadowBlur = blurIntensity * 1.2;
+
+            ctx.beginPath();
+            ctx.arc(p.x, p.y, radius, 0, Math.PI * 2);
+            ctx.fill();
+        });
+    }
 
     ctx.shadowColor = 'transparent';
 
