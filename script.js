@@ -112,7 +112,7 @@ let mouseAngleY = 0;
 let lastFrameTime = 0;
 
 const trailHistory = [];
-const trailLength = 8;
+const trailLength = 14; // Increased trail for a stronger motion-blur effect
 
 const autoRotationSpeedX = 0.003;
 const autoRotationSpeedY = 0.002;
@@ -166,8 +166,8 @@ function animate(timestamp = 0) {
     for (let i = trailHistory.length - 1; i >= 0; i--) {
         const { vertices, hue: frameHue } = trailHistory[i];
         const fade = 1 - i / trailLength;
-        const opacity = 0.1 + fade * 0.25;
-        const blurIntensity = 10 * fade;
+        const opacity = 0.12 + fade * 0.32; // higher opacity to emphasize the trail
+        const blurIntensity = 14 * fade; // stronger blur for deeper motion smearing
 
         cube.edges.forEach(edge => {
             const p1 = vertices[edge[0]];
