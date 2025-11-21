@@ -117,9 +117,8 @@ function animate(timestamp = 0) {
     const delta = lastFrameTime ? (timestamp - lastFrameTime) / 16.67 : 1;
     lastFrameTime = timestamp;
 
-    // Fade previous frame slightly to create motion trail without a harsh black background
-    ctx.fillStyle = 'rgba(10, 14, 39, 0.08)';
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    // Clear previous frame so the cube renders without a background overlay
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
 
     const mouseInfluence = 0.002;
     const targetAngleX = (mouseY - canvas.height / 2) * mouseInfluence;
